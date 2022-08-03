@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { parser } from "@lib/main";
+import { lexer } from "@lib/main";
 import Editor from "react-simple-code-editor";
 import Prism from "prismjs";
 import "prismjs/components/prism-clike";
@@ -30,7 +30,11 @@ function App() {
             lineHeight: 1.3,
           }}
         />
-        <div className="panel">{parser(code)}</div>
+        <div className="panel">
+          {lexer(code).map((tokens) => (
+            <span className="lexed-token">{tokens.lexeme}</span>
+          ))}
+        </div>
       </div>
     </div>
   );

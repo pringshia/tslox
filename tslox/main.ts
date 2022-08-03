@@ -1,3 +1,3 @@
-import { parser } from "./parser";
+import { lexer } from "./lexer";
 
-export { parser };
+export { lexer };

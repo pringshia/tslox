@@ -1,5 +1,6 @@
 :root {
-  font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
+  /* font-family: Inter, Avenir, Helvetica, Arial, sans-serif; */
+  font-family: "Fira code", "Fira Mono", monospace;
   font-size: 16px;
   line-height: 24px;
   font-weight: 400;
@@ -29,10 +30,23 @@
 }
 
 .panel {
-  background-color: #eee;
+  background-color: rgb(239, 246, 255);
+  border-radius: 10px;
   padding: 20px;
   box-sizing: content-box;
   width: 300px;
+}
+
+.lexed-token {
+  background-color: #ddd;
+  padding: 3px 13px;
+  margin: 0px 10px 14px;
+  border-radius: 4px;
+  border: 1px solid #999;
+  box-shadow: rgba(50, 50, 93, 0.25) 0px 2px 5px -1px,
+    rgba(0, 0, 0, 0.3) 0px 1px 3px -1px;
+  white-space: nowrap;
+  display: inline-block;
 }
 
 a {
