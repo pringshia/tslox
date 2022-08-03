@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "build:webapp": "tsc && vite build --config vite-webapp.config.ts",
     "preview": "vite preview"
   },
   "dependencies": {
