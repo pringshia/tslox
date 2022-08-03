@@ -2,11 +2,13 @@ import { useState } from "react";
 import { lexer } from "@lib/main";
 import Editor from "react-simple-code-editor";
 import Prism from "prismjs";
-import "prismjs/components/prism-clike";
+// import "prismjs/components/prism-clike";
 import "prismjs/themes/prism.css";
 
 function App() {
-  const [code, setCode] = useState(`function add(a, b) {\n  return a + b;\n}`);
+  const [code, setCode] = useState(
+    `// type code here...\nfunction add(a, b) {\n  return a + b;\n}`
+  );
 
   return (
     <div className="app">
@@ -20,7 +22,8 @@ function App() {
           value={code}
           onValueChange={(code) => setCode(code)}
           highlight={(code) =>
-            Prism.highlight(code, Prism.languages["clike"], "clike")
+            // Prism.highlight(code, Prism.languages["clike"], "clike")
+            code
           }
           padding={10}
           style={{
@@ -31,6 +34,7 @@ function App() {
           }}
         />
         <div className="panel">
+          <h2>Tokens</h2>
           {lexer(code).map((tokens) => (
             <span className="lexed-token">{tokens.lexeme}</span>
           ))}
