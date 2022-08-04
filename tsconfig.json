@@ -19,7 +19,8 @@
     "paths": {
       "@test/*": ["./test-bench/*"],
       "@lib/*": ["./tslox/*"]
-    }
+    },
+    "types": ["vite/client", "@types/jest"]
   },
   "include": ["test-bench", "test-bench/**/*", "tslox", "tslox/**/*", "*"],
   "references": [{ "path": "./tsconfig.node.json" }]

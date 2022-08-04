@@ -30,11 +30,20 @@ class Scanner {
     if (this.isAtEnd()) return false;
     if (this.source.charAt(this.current) !== expectedChar) return false;
 
-    this.current++;
+    this.advance();
     return true;
   }
+  advanceToEndOrUntil(
+    terminatingChar: string,
+    callbackFn: (char: string) => void = () => {}
+  ): void {
+    while (this.peek() !== terminatingChar && !this.isAtEnd()) {
+      callbackFn(this.peek());
+      this.advance();
+    }
+  }
   peek(): string {
-    return this.source.charAt(this.current + 1);
+    return this.source.charAt(this.current);
   }
   newLine() {
     this.line++;
@@ -61,7 +70,6 @@ export function getTokens(source: string): Response<Token[]> {
   while (!scanner.isAtEnd()) {
     scanner.startLexeme();
     const c = scanner.advance();
-    console.log("categorizing: ", c);
     const token = match(c)
       .with("(", () => createToken(TokenType.LEFT_PAREN))
       .with(")", () => createToken(TokenType.RIGHT_PAREN))
@@ -74,45 +82,40 @@ export function getTokens(source: string): Response<Token[]> {
       .with(";", () => createToken(TokenType.SEMICOLON))
       .with("*", () => createToken(TokenType.STAR))
       .with("!", () =>
-        createToken(
-          scanner.advanceIf("=") ? TokenType.BANG_EQUAL : TokenType.BANG
-        )
+        scanner.advanceIf("=")
+          ? createToken(TokenType.BANG_EQUAL)
+          : createToken(TokenType.BANG)
       )
       .with("=", () =>
-        createToken(
-          scanner.advanceIf("=") ? TokenType.EQUAL_EQUAL : TokenType.EQUAL
-        )
+        scanner.advanceIf("=")
+          ? createToken(TokenType.EQUAL_EQUAL)
+          : createToken(TokenType.EQUAL)
       )
       .with("<", () =>
-        createToken(
-          scanner.advanceIf("=") ? TokenType.LESS_EQUAL : TokenType.LESS
-        )
+        scanner.advanceIf("=")
+          ? createToken(TokenType.LESS_EQUAL)
+          : createToken(TokenType.LESS)
       )
       .with(">", () =>
-        createToken(
-          scanner.advanceIf("=") ? TokenType.GREATER_EQUAL : TokenType.GREATER
-        )
+        scanner.advanceIf("=")
+          ? createToken(TokenType.GREATER_EQUAL)
+          : createToken(TokenType.GREATER)
       )
       .with("/", () => {
         if (scanner.advanceIf("/")) {
-          console.log("line comment detected");
           // Read comment strings until the end of the line
-          while (scanner.peek() !== "\n" && !scanner.isAtEnd()) {
-            console.log(scanner.peek());
-            scanner.advance();
-          }
-          console.log("line comment finished, next char is" + scanner.peek());
+          scanner.advanceToEndOrUntil("\n");
           return createToken(TokenType.IGNORE);
         } else {
           return createToken(TokenType.SLASH);
         }
       })
       .with('"', () => {
-        while (scanner.peek() !== '"' && !scanner.isAtEnd()) {
-          if (scanner.peek() === "\n") {
-            scanner.newLine();
-          }
-        }
+        scanner.advanceToEndOrUntil(
+          '"',
+          (char) => char === "\n" && scanner.newLine()
+        );
+
         if (scanner.isAtEnd()) {
           return createToken(TokenType.INVALID, "Unterminated string.");
         }
@@ -151,7 +154,7 @@ export function getTokens(source: string): Response<Token[]> {
   tokens.push(newToken(TokenType.EOF, "", null, scanner.getLine()));
 
   return {
-    result: tokens, //.filter((token) => token.type !== TokenType.IGNORE),
+    result: tokens.filter((token) => token.type !== TokenType.IGNORE),
     errors: errors,
   };
 }
