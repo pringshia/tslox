@@ -111,10 +111,9 @@ export function getTokens(source: string): Response<Token[]> {
         }
       })
       .with('"', () => {
-        scanner.advanceToEndOrUntil(
-          '"',
-          (char) => char === "\n" && scanner.newLine()
-        );
+        scanner.advanceToEndOrUntil('"', (char) => {
+          if (char === "\n") scanner.newLine();
+        });
 
         if (scanner.isAtEnd()) {
           return createToken(TokenType.INVALID, "Unterminated string.");

@@ -25,10 +25,16 @@ describe("Lexer", () => {
     const source = "///";
     const tokens = lexer.getTokens(source);
     expect(
-      tokens.result.filter((token) => token.type === TokenType.DOT)
+      tokens.result.filter((token) => token.type !== TokenType.EOF)
     ).toHaveLength(0);
   });
-  // it("should work with ");
+  it("should work with string literals", () => {
+    const source = '"test"';
+    const tokens = lexer.getTokens(source);
+    expect(
+      tokens.result.filter((token) => token.type !== TokenType.EOF)
+    ).toHaveLength(1);
+  });
 });
 
 export {};
