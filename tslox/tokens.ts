@@ -30,7 +30,7 @@ export enum TokenType {
   SLASH = "SLASH",
   STAR = "STAR",
 
-  // // Potentially one or two character tokens:
+  // Potentially one or two character tokens:
   BANG = "BANG",
   BANG_EQUAL = "BANG_EQUAL",
   EQUAL = "EQUAL",
@@ -40,12 +40,12 @@ export enum TokenType {
   LESS = "LESS",
   LESS_EQUAL = "LESS_EQUAL",
 
-  // // Literals:
+  // Literals:
   IDENTIFIER = "IDENTIFIER",
   STRING = "STRING",
   NUMBER = "NUMBER",
 
-  // // Keywords:
+  // Keywords:
   AND = "AND",
   CLASS = "CLASS",
   ELSE = "ELSE",
