@@ -35,8 +35,10 @@ function App() {
         />
         <div className="panel">
           <h2>Tokens</h2>
-          {lexer(code).map((tokens) => (
-            <span className="lexed-token">{tokens.lexeme}</span>
+          {lexer.getTokens(code).result.map((tokens) => (
+            <span className="lexed-token" title={tokens.lexeme}>
+              {tokens.type}
+            </span>
           ))}
         </div>
       </div>

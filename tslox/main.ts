@@ -1,3 +1,13 @@
-import { lexer } from "./lexer";
+import * as lexer from "./lexer";
+import { ConsoleReporter } from "./error";
 
-export { lexer };
+function execute(source: string, onError = ConsoleReporter.report) {
+  let hasError = false;
+
+  const { result: tokens, errors: lexErrors } = lexer.getTokens(source);
+  if (lexErrors) {
+    hasError = true;
+  }
+}
+
+export { lexer, execute };
