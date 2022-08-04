@@ -28,12 +28,33 @@ describe("Lexer", () => {
       tokens.result.filter((token) => token.type !== TokenType.EOF)
     ).toHaveLength(0);
   });
-  it("should work with string literals", () => {
+  it("should work for string literals", () => {
     const source = '"test"';
     const tokens = lexer.getTokens(source);
     expect(
       tokens.result.filter((token) => token.type !== TokenType.EOF)
     ).toHaveLength(1);
+    expect(tokens.result[0].literal).toEqual("test");
+  });
+  it("should yield an error for unexpected characters", () => {
+    const source = "#";
+    const tokens = lexer.getTokens(source);
+    expect(tokens.errors).toHaveLength(1);
+    if (tokens["errors"]) {
+      expect(tokens.errors[0].message).toMatch(/Unexpected character/);
+    } else {
+      fail("An error should have been reported");
+    }
+  });
+  it("should yield an error for unterminated strings", () => {
+    const source = '"this is an unterminated string';
+    const tokens = lexer.getTokens(source);
+    expect(tokens.errors).toHaveLength(1);
+    if (tokens["errors"]) {
+      expect(tokens.errors[0].message).toMatch(/Unterminated string/);
+    } else {
+      fail("An error should have been reported");
+    }
   });
 });
 

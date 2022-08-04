@@ -8,7 +8,9 @@ export type Token = {
 export enum TokenType {
   // Note: By default, Typescript enums implicity get assigned autoincrementing numbers.
   // The way this gets typed, means that we can provide any number to a function taking the enum as parameter.
-  // This isn't the case for enum with string values, which is why we choose to assign string values below.
+  // This sort of breaks the `.exhaustive()` method in the `ts-pattern` library.
+  //
+  // Luckily, this isn't the case for enums with string values, which is why we assign string values below.
   // This approach allows the enum to work with the `.exhaustive()` method in the `ts-pattern` library.
   //
   // References:
