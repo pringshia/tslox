@@ -1,4 +1,6 @@
+import { isAlphaNumeric } from "./../lexer";
 import { lexer } from "@lib/main";
+import { isAlpha } from "@lib/lexer";
 import { TokenType } from "@lib/tokens";
 
 describe("Lexer", () => {
@@ -55,6 +57,48 @@ describe("Lexer", () => {
     } else {
       fail("An error should have been reported");
     }
+  });
+  it("should work for numerical literals", () => {
+    const source = "123";
+    const tokens = lexer.getTokens(source);
+    expect(
+      tokens.result.filter((token) => token.type !== TokenType.EOF)
+    ).toHaveLength(1);
+    expect(tokens.result[0].literal).toBe(123);
+  });
+  it("should work for numerical literals with decimals", () => {
+    const source = "123.12";
+    const tokens = lexer.getTokens(source);
+    expect(
+      tokens.result.filter((token) => token.type !== TokenType.EOF)
+    ).toHaveLength(1);
+    expect(tokens.result[0].literal).toBe(123.12);
+  });
+  it("has the correct logic for alpha characters", () => {
+    expect(isAlpha("a")).toBe(true);
+    expect(isAlpha("A")).toBe(true);
+    expect(isAlpha("_")).toBe(true);
+    expect(isAlpha("-")).toBe(false);
+    expect(isAlpha("1")).toBe(false);
+  });
+  it("has the correct logic for alphanumeric characters", () => {
+    expect(isAlphaNumeric("a")).toBe(true);
+    expect(isAlphaNumeric("A")).toBe(true);
+    expect(isAlphaNumeric("_")).toBe(true);
+    expect(isAlphaNumeric("-")).toBe(false);
+    expect(isAlphaNumeric("1")).toBe(true);
+  });
+  it("acknowledges reserved keywords", () => {
+    const source = "for love and war";
+    const tokens = lexer.getTokens(source);
+
+    expect(
+      tokens.result.filter((token) => token.type !== TokenType.EOF)
+    ).toHaveLength(4);
+    expect(tokens.result[0].type).toBe(TokenType.FOR);
+    expect(tokens.result[1].type).toBe(TokenType.IDENTIFIER);
+    expect(tokens.result[2].type).toBe(TokenType.AND);
+    expect(tokens.result[3].type).toBe(TokenType.IDENTIFIER);
   });
 });
 

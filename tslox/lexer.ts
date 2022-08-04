@@ -1,9 +1,13 @@
 import { Error } from "./error";
-import { Token, TokenType, newToken } from "./tokens";
+import { Token, TokenType, newToken, ReservedKeyword } from "./tokens";
 import { Response } from "./base";
-import { match } from "ts-pattern";
+import { match, P } from "ts-pattern";
 
-class Scanner {
+export const isDigit = (c: string) => /\d/.test(c);
+export const isAlpha = (c: string) => /[a-zA-Z_]/.test(c);
+export const isAlphaNumeric = (c: string) => /[a-zA-Z_\d]/.test(c);
+
+export class Scanner {
   source: string;
   start: number = 0;
   current: number = 0;
@@ -45,6 +49,9 @@ class Scanner {
   peek(): string {
     return this.source.charAt(this.current);
   }
+  peekOneMore(): string {
+    return this.source.charAt(this.current + 1);
+  }
   newLine() {
     this.line++;
   }
@@ -66,6 +73,9 @@ export function getTokens(source: string): Response<Token[]> {
       line: scanner.getLine(),
     };
   }
+
+  const numericMatch = P.when<string, (value: string) => boolean>(isDigit);
+  const alphaMatch = P.when<string, (value: string) => boolean>(isAlpha);
 
   while (!scanner.isAtEnd()) {
     scanner.startLexeme();
@@ -132,6 +142,62 @@ export function getTokens(source: string): Response<Token[]> {
       .with("\n", () => {
         scanner.newLine();
         return createToken(TokenType.IGNORE);
+      })
+      .with(numericMatch, () => {
+        while (isDigit(scanner.peek())) {
+          scanner.advance();
+        }
+        if (scanner.peek() === "." && isDigit(scanner.peekOneMore())) {
+          // Consume the "." decimal point
+          scanner.advance();
+
+          while (isDigit(scanner.peek())) {
+            scanner.advance();
+          }
+        }
+        return createToken(
+          TokenType.NUMBER,
+          parseFloat(scanner.currentLexeme())
+        );
+      })
+      .with(alphaMatch, () => {
+        while (isAlphaNumeric(scanner.peek())) {
+          scanner.advance();
+        }
+
+        let tokenType;
+        try {
+          tokenType = match<ReservedKeyword>(
+            scanner.currentLexeme() as ReservedKeyword
+          )
+            .with("and", () => TokenType.AND)
+            .with("class", () => TokenType.CLASS)
+            .with("else", () => TokenType.ELSE)
+            .with("false", () => TokenType.FALSE)
+            .with("fun", () => TokenType.FUN)
+            .with("for", () => TokenType.FOR)
+            .with("if", () => TokenType.IF)
+            .with("nil", () => TokenType.NIL)
+            .with("or", () => TokenType.OR)
+            .with("print", () => TokenType.PRINT)
+            .with("return", () => TokenType.RETURN)
+            .with("super", () => TokenType.SUPER)
+            .with("this", () => TokenType.THIS)
+            .with("true", () => TokenType.TRUE)
+            .with("var", () => TokenType.VAR)
+            .with("while", () => TokenType.WHILE)
+            .exhaustive();
+        } catch {
+          // WARNING: Possible performance hit here
+          // This catch block is expected to be a pretty commonly traversed code path, and if we are
+          // throwing for every identifier we encounter, there may be performance or other implications
+          // worth exploring. The reason we use this approach is so that we can use .match().exhaustive()
+          // above for the benefits of compile time type-safety, ensuring that we are covering all reserved keywords.
+          // I am not a Typescript wizard just yet, so cannot come up with a non-try/catch solution just yet.
+          tokenType = TokenType.IDENTIFIER;
+        }
+
+        return createToken(tokenType);
       })
       .otherwise(() =>
         createToken(

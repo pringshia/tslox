@@ -68,6 +68,24 @@ export enum TokenType {
   INVALID = "INVALID",
 }
 
+export type ReservedKeyword =
+  | "and"
+  | "class"
+  | "else"
+  | "false"
+  | "fun"
+  | "for"
+  | "if"
+  | "nil"
+  | "or"
+  | "print"
+  | "return"
+  | "super"
+  | "this"
+  | "true"
+  | "var"
+  | "while";
+
 export function newToken(
   type: TokenType,
   lexeme: string,
