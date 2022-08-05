@@ -1,6 +1,5 @@
-import { isAlphaNumeric } from "./../lexer";
 import { lexer } from "@lib/main";
-import { isAlpha } from "@lib/lexer";
+import { isAlpha, isAlphaNumeric, isDigit } from "@lib/lexer";
 import { TokenType } from "@lib/tokens";
 
 describe("Lexer", () => {
@@ -87,6 +86,13 @@ describe("Lexer", () => {
     expect(isAlphaNumeric("_")).toBe(true);
     expect(isAlphaNumeric("-")).toBe(false);
     expect(isAlphaNumeric("1")).toBe(true);
+  });
+  it("has the correct logic for digits", () => {
+    expect(isDigit("a")).toBe(false);
+    expect(isDigit("A")).toBe(false);
+    expect(isDigit("_")).toBe(false);
+    expect(isDigit("-")).toBe(false);
+    expect(isDigit("1")).toBe(true);
   });
   it("acknowledges reserved keywords", () => {
     const source = "for love and war";

@@ -1,5 +1,5 @@
-import * as lexer from "./lexer";
-import { ConsoleReporter } from "./error";
+import * as lexer from "@lib/lexer";
+import { ConsoleReporter } from "@lib/error";
 
 function execute(source: string, onError = ConsoleReporter.report) {
   let hasError = false;
