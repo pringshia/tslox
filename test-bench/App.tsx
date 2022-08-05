@@ -91,6 +91,7 @@ function App() {
               fontFamily: '"Fira code", "Fira Mono", monospace',
               fontSize: 24,
               lineHeight: 1.3,
+              background: "#eee",
             }}
           />
         </div>
