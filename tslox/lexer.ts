@@ -1,64 +1,12 @@
-import { Error } from "./error";
-import { Token, TokenType, newToken, ReservedKeyword } from "./tokens";
-import { Response } from "./base";
 import { match, P } from "ts-pattern";
+import { Scanner } from "@lib/scanner";
+import { Token, TokenType, newToken, ReservedKeyword } from "@lib/tokens";
+import { Response } from "@lib/base";
+import { Error } from "@lib/error";
 
 export const isDigit = (c: string) => /\d/.test(c);
 export const isAlpha = (c: string) => /[a-zA-Z_]/.test(c);
 export const isAlphaNumeric = (c: string) => /[a-zA-Z_\d]/.test(c);
-
-export class Scanner {
-  source: string;
-  start: number = 0;
-  current: number = 0;
-  line: number = 0;
-
-  constructor(source: string) {
-    this.source = source;
-  }
-
-  isAtEnd(): boolean {
-    return this.current >= this.source.length;
-  }
-
-  startLexeme(): void {
-    this.start = this.current;
-  }
-  currentLexeme(): string {
-    return this.source.substring(this.start, this.current);
-  }
-  advance(): string {
-    return this.source.charAt(this.current++);
-  }
-  advanceIf(expectedChar: string): boolean {
-    if (this.isAtEnd()) return false;
-    if (this.source.charAt(this.current) !== expectedChar) return false;
-
-    this.advance();
-    return true;
-  }
-  advanceToEndOrUntil(
-    terminatingChar: string,
-    callbackFn: (char: string) => void = () => {}
-  ): void {
-    while (this.peek() !== terminatingChar && !this.isAtEnd()) {
-      callbackFn(this.peek());
-      this.advance();
-    }
-  }
-  peek(): string {
-    return this.source.charAt(this.current);
-  }
-  peekOneMore(): string {
-    return this.source.charAt(this.current + 1);
-  }
-  newLine() {
-    this.line++;
-  }
-  getLine() {
-    return this.line;
-  }
-}
 
 export function getTokens(source: string): Response<Token[]> {
   let tokens: Token[] = [];
@@ -209,7 +157,7 @@ export function getTokens(source: string): Response<Token[]> {
     if (token.type === TokenType.INVALID) {
       errors.push({
         line: token.line,
-        where: "",
+        where: "", // TODO implement
         message: token.literal,
       });
     } else {
