@@ -15,8 +15,8 @@ describe("Parser", () => {
       newGrouping(newLiteral(45.67))
     );
 
-    // We'll define a printer to form a string representation
-    // of the above tree to assert against
+    // We'll define a one-off printer just for this test to convert a
+    // a pre-defined AST into a string representation.
     function ASTPrinter(expression: Expr) {
       function parenthesize(name: string, ...exprs: Expr[]) {
         let string = "(" + name;
