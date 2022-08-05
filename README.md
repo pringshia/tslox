@@ -1,5 +1,7 @@
 # tslox
 
+![CI status](https://github.com/pringshia/tslox/actions/workflows/tests.yml/badge.svg)
+
 A **TypeScript** implementation of the Lox programming language ([as specified in the book _Crafting Interpeters_](https://craftinginterpreters.com/the-lox-language.html)).
 
 ## Wayfinding
