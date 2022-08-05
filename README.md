@@ -1,6 +1,6 @@
 # tslox
 
-An implementation of the Lox programming language ([as specified in the book _Crafting Interpeters_](https://craftinginterpreters.com/the-lox-language.html)) written using **Typescript**.
+A **Typescript** implementation of the Lox programming language ([as specified in the book _Crafting Interpeters_](https://craftinginterpreters.com/the-lox-language.html)).
 
 ## Wayfinding
 
