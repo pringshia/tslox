@@ -40,7 +40,7 @@ function App() {
               {tokens.type}
             </span>
           ))}
-          <h2>Errors</h2>
+          {!lexer.getTokens(code).errors?.length ? null : <h2>Errors</h2>}
           {lexer.getTokens(code).errors?.map((error) => (
             <span className="lexed-token">
               L{error.line}: {error.message}
