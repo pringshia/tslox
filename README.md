@@ -4,7 +4,7 @@ A **Typescript** implementation of the Lox programming language ([as specified i
 
 ## Wayfinding
 
-- The main Typescript code for the library can be found in the `tslox/` folder.
+- The main TypeScript code for the library can be found in the `tslox/` folder.
   - `npm test` will run the tests in `tslox/tests/` to ensure assertions are met.
   - `npm run build` will output the compiled library code into `dist/`.
 - A "test bench" exists, which is a React app that allows you to explore, understand, and prod the `tslox` library through a web interface.

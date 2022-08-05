@@ -122,3 +122,20 @@ ul.quicklinks li a {
     animation: octocat-wave 560ms ease-in-out;
   }
 }
+
+h1 {
+  margin: 0;
+}
+
+.description {
+  font: normal 22px/30px "Crimson Text", Georgia, serif;
+  width: 600px;
+}
+
+.description p {
+  margin-bottom: 20px;
+}
+
+.header {
+  margin-bottom: 20px;
+}

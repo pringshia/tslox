@@ -29,6 +29,26 @@ function App() {
         <h1 style={{ display: "flex", alignItems: "center" }}>
           <pre>tslox</pre>{" "}
         </h1>
+        <div className="description">
+          <p className="description">
+            An interactive <em>test bench</em> for a <strong>TypeScript</strong>{" "}
+            implementation of the Lox programming language (
+            <a
+              href="https://craftinginterpreters.com/the-lox-language.html"
+              target="_blank"
+            >
+              as specified in the book <em>Crafting Interpeters</em>
+            </a>
+            ).
+          </p>
+          <p>
+            The actual interpreter source code can be found on{" "}
+            <a href="https://github.com/pringshia/tslox">
+              <strong>GitHub</strong>
+            </a>
+            .
+          </p>
+        </div>
       </div>
       <div className="container">
         <div className="editor">
