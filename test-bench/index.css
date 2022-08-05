@@ -74,3 +74,24 @@ body {
 .container {
   display: flex;
 }
+
+.editor {
+  flex: 1;
+}
+
+ul.quicklinks {
+  list-style-type: none;
+  margin: 0px 0px 20px 0px;
+  padding: 0;
+}
+
+ul.quicklinks li {
+  margin-right: 20px;
+  display: inline-block;
+}
+
+ul.quicklinks li a {
+  text-decoration: underline;
+  font-weight: bold;
+  font-size: 15px;
+}
