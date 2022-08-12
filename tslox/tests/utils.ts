@@ -2,14 +2,9 @@ import { Expr } from "@lib/grammar";
 import { match } from "ts-pattern";
 
 export function ASTPrinter(expression: Expr) {
-  function parenthesize(name: string, ...exprs: Expr[]) {
-    let string = "(" + name;
-    for (let expr of exprs) {
-      string += " ";
-      string += ASTPrinter(expr);
-    }
-    string += ")";
-    return string;
+  function parenthesize(name: string, ...exprs: Expr[]): string {
+    const printedExprs = exprs.map((expr) => " " + ASTPrinter(expr)).join("");
+    return "(" + name + printedExprs + ")";
   }
 
   return match<Expr>(expression)
