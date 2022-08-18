@@ -4,11 +4,11 @@ export type Error = {
   message: string;
 };
 
-export class ParseError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "ParseError";
-  }
+export type ParseError = Error;
+
+// Typeguard function
+export function isError(err: any): err is Error {
+  return "line" in err && "message" in err && "where" in err;
 }
 
 export const ConsoleReporter = {

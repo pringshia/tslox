@@ -1,4 +1,4 @@
-import { Error, ParseError } from "@lib/error";
+import { ParseError, isError } from "@lib/error";
 import {
   Expr,
   newBinary,
@@ -8,6 +8,18 @@ import {
 } from "@lib/grammar";
 import { Token, TokenType } from "@lib/tokens";
 import { Response } from "@lib/base";
+
+/*
+expression     → equality ( "," equality )* ;
+equality       → comparison ( ( "!=" | "==" ) comparison )* ;
+comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
+term           → factor ( ( "-" | "+" ) factor )* ;
+factor         → unary ( ( "/" | "*" ) unary )* ;
+unary          → ( "!" | "-" ) unary
+               | primary ;
+primary        → NUMBER | STRING | "true" | "false" | "nil"
+               | "(" expression ")" ;
+*/
 export class Parser {
   tokens: Token[] = [];
   current = 0;
@@ -21,7 +33,7 @@ export class Parser {
         result: this.parseExpression(),
       };
     } catch (error) {
-      if (this.isError(error)) {
+      if (isError(error)) {
         return {
           result: null,
           errors: [error],
@@ -32,13 +44,15 @@ export class Parser {
     }
   }
 
-  // Typeguard function
-  isError(err: any): err is Error {
-    return "line" in err && "message" in err && "where" in err;
-  }
-
   parseExpression(): Expr {
-    return this.parseEquality();
+    let expr = this.parseEquality();
+
+    while (this.match(TokenType.COMMA)) {
+      let operator = this.previous();
+      let right = this.parseEquality();
+      expr = newBinary(expr, operator, right);
+    }
+    return expr;
   }
   parseEquality(): Expr {
     let expr = this.parseComparison();
@@ -112,12 +126,12 @@ export class Parser {
     throw this.error(this.peek(), message);
   }
   error(token: Token, message: string) {
-    const error: Error = {
+    const error: ParseError = {
       line: token.line,
       where: token.type === TokenType.EOF ? "at end" : `at '${token.lexeme}'`,
       message,
     };
-    throw error;
+    return error;
   }
   previous(): Token {
     return this.tokens[this.current - 1];
@@ -148,6 +162,32 @@ export class Parser {
   }
   peek(): Token {
     return this.tokens[this.current];
+  }
+  synchronize(): void {
+    this.advance();
+
+    const newStatementKeywords = [
+      TokenType.CLASS,
+      TokenType.FUN,
+      TokenType.VAR,
+      TokenType.FOR,
+      TokenType.IF,
+      TokenType.WHILE,
+      TokenType.PRINT,
+      TokenType.RETURN,
+    ];
+
+    while (!this.isAtEnd()) {
+      // discard until we reach an end of a statment, e.g. semicolon...
+      if (this.previous().type === TokenType.SEMICOLON) {
+        return;
+      }
+      // ...or a keyword that usually starts a new statement
+      if (newStatementKeywords.includes(this.peek().type)) {
+        return;
+      }
+      this.advance();
+    }
   }
 }
 

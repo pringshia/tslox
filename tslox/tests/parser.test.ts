@@ -21,7 +21,7 @@ describe("Parser", () => {
 
     const error = errors && errors[0];
 
-    if (error == null) {
+    if (error === null) {
       fail("Expected an error");
     } else {
       expect(error).toMatchObject({
@@ -38,7 +38,7 @@ describe("Parser", () => {
 
     const error = errors && errors[0];
 
-    if (error == null) {
+    if (error === null) {
       fail("Expected an error");
     } else {
       expect(error).toMatchObject({
@@ -46,6 +46,17 @@ describe("Parser", () => {
         where: "at 'fun'",
         message: "Expected expression.",
       });
+    }
+  });
+  it("should parse the comma operator", () => {
+    const source = "3 + 4, 5 - 6, 1 + 3";
+    const { result: tokens } = getTokens(source);
+    const { result: tree } = new Parser(tokens).parse();
+
+    if (tree === null) {
+      fail("Unexpected parse error");
+    } else {
+      expect(ASTPrinter(tree)).toEqual("(, (, (+ 3 4) (- 5 6)) (+ 1 3))");
     }
   });
 });
