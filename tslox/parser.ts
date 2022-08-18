@@ -45,6 +45,12 @@ export class Parser {
   }
 
   parseExpression(): Expr {
+    if (this.match(TokenType.COMMA))
+      throw this.error(
+        this.previous(),
+        "Expected expression before comma operator."
+      );
+
     let expr = this.parseEquality();
 
     while (this.match(TokenType.COMMA)) {
@@ -55,6 +61,13 @@ export class Parser {
     return expr;
   }
   parseEquality(): Expr {
+    if (this.match(TokenType.BANG_EQUAL, TokenType.EQUAL_EQUAL)) {
+      throw this.error(
+        this.previous(),
+        "Expected comparable before equality operator."
+      );
+    }
+
     let expr = this.parseComparison();
 
     while (this.match(TokenType.BANG_EQUAL, TokenType.EQUAL_EQUAL)) {
@@ -65,7 +78,22 @@ export class Parser {
     return expr;
   }
   parseComparison(): Expr {
+    if (
+      this.match(
+        TokenType.GREATER,
+        TokenType.GREATER_EQUAL,
+        TokenType.LESS,
+        TokenType.LESS_EQUAL
+      )
+    ) {
+      throw this.error(
+        this.previous(),
+        "Expected term before comparison operator."
+      );
+    }
+
     let expr = this.parseTerm();
+
     while (
       this.match(
         TokenType.GREATER,
@@ -81,7 +109,12 @@ export class Parser {
     return expr;
   }
   parseTerm(): Expr {
+    if (this.match(TokenType.MINUS, TokenType.PLUS)) {
+      throw this.error(this.previous(), "Expected operand before operator.");
+    }
+
     let expr = this.parseFactor();
+
     while (this.match(TokenType.MINUS, TokenType.PLUS)) {
       let operator = this.previous();
       let right = this.parseFactor();
@@ -90,7 +123,12 @@ export class Parser {
     return expr;
   }
   parseFactor(): Expr {
+    if (this.match(TokenType.SLASH, TokenType.STAR)) {
+      throw this.error(this.previous(), "Expected operand before operator.");
+    }
+
     let expr = this.parseUnary();
+
     while (this.match(TokenType.SLASH, TokenType.STAR)) {
       let operator = this.previous();
       let right = this.parseUnary();

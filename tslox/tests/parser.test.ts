@@ -59,4 +59,28 @@ describe("Parser", () => {
       expect(ASTPrinter(tree)).toEqual("(, (, (+ 3 4) (- 5 6)) (+ 1 3))");
     }
   });
+  it("should throw a predicted error when left-operand is missing in binary expression (addition)", () => {
+    const source = "+ 5";
+    const { result: tokens } = getTokens(source);
+    const { result: tree, errors: errors } = new Parser(tokens).parse();
+
+    if (!errors) {
+      fail("Expected an error");
+    } else {
+      expect(errors[0].message === "Expected operand before operator.");
+    }
+  });
+  it("should throw a predicted error when left-operand is missing in binary expression (comma)", () => {
+    const source = ", 5";
+    const { result: tokens } = getTokens(source);
+    const { result: tree, errors: errors } = new Parser(tokens).parse();
+
+    if (!errors) {
+      fail("Expected an error");
+    } else {
+      expect(
+        errors[0].message === "Expected expression before comma operator."
+      );
+    }
+  });
 });
