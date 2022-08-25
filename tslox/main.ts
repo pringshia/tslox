@@ -19,4 +19,4 @@ function execute(source: string, onError = ConsoleReporter.report) {
   }
 }
 
-export { lexer, execute };
+export { lexer, parser, execute };

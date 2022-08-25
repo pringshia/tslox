@@ -67,7 +67,7 @@ describe("Parser", () => {
     if (!errors) {
       fail("Expected an error");
     } else {
-      expect(errors[0].message === "Expected operand before operator.");
+      expect(errors[0].message).toBe("Expected operand before operator.");
     }
   });
   it("should throw a predicted error when left-operand is missing in binary expression (comma)", () => {
@@ -78,8 +78,8 @@ describe("Parser", () => {
     if (!errors) {
       fail("Expected an error");
     } else {
-      expect(
-        errors[0].message === "Expected expression before comma operator."
+      expect(errors[0].message).toBe(
+        "Expected expression before comma operator."
       );
     }
   });
