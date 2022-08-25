@@ -1,4 +1,4 @@
-import { ParseError, isError } from "@lib/error";
+import { ParseError, isParseError } from "@lib/error";
 import {
   Expr,
   newBinary,
@@ -33,7 +33,7 @@ export class Parser {
         result: this.parseExpression(),
       };
     } catch (error) {
-      if (isError(error)) {
+      if (isParseError(error)) {
         return {
           result: null,
           errors: [error],
