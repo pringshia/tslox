@@ -200,4 +200,50 @@ describe("Logical operators", () => {
       logSpy.mockRestore();
     });
   });
+  describe("For loops", () => {
+    it("should print out the Fibbonaci sequence", () => {
+      const logSpy = jest.spyOn(console, "log"); /*.mockImplementation();*/
+      const reportError = jest.fn();
+      const out = executeProgram(
+        `
+        var a = 0;
+        var temp;
+        
+        for (var b = 1; a < 10000; b = temp + b) {
+          print a;
+          temp = a;
+          a = b;
+        }      `,
+        (err) => reportError(err)
+      );
+      expect(reportError).not.toBeCalled();
+      const expectedResults = [
+        "0",
+        "1",
+        "1",
+        "2",
+        "3",
+        "5",
+        "8",
+        "13",
+        "21",
+        "34",
+        "55",
+        "89",
+        "144",
+        "233",
+        "377",
+        "610",
+        "987",
+        "1597",
+        "2584",
+        "4181",
+        "6765",
+      ];
+      for (const [i, expectedResult] of expectedResults.entries()) {
+        expect(logSpy).toHaveBeenNthCalledWith(i + 1, expectedResult);
+      }
+      logSpy.mockRestore();
+    });
+  });
 });

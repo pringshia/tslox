@@ -115,6 +115,7 @@ export class Parser {
     return newVarStmt(name, initializer);
   }
   parseStatement(): Stmt {
+    if (this.match(TokenType.FOR)) return this.parseForStmt();
     if (this.match(TokenType.IF)) return this.parseIfStmt();
     if (this.match(TokenType.PRINT)) {
       return this.parsePrintStmt();
@@ -146,7 +147,43 @@ export class Parser {
 
     return newWhileStmt(condition, body);
   }
+  parseForStmt(): Stmt {
+    this.consume(TokenType.LEFT_PAREN, "Expected '(' after 'for'.");
 
+    let initializer: Stmt | null;
+    if (this.match(TokenType.SEMICOLON)) {
+      initializer = null;
+    } else if (this.match(TokenType.VAR)) {
+      initializer = this.parseVarDeclaration();
+    } else {
+      initializer = this.parseExprStmt();
+    }
+
+    let condition: Expr | null = null;
+    if (!this.check(TokenType.SEMICOLON)) {
+      condition = this.parseExpression();
+    }
+    this.consume(TokenType.SEMICOLON, "Expected ';' after loop condition.");
+
+    let increment: Expr | null = null;
+    if (!this.check(TokenType.RIGHT_PAREN)) {
+      increment = this.parseExpression();
+    }
+    this.consume(TokenType.RIGHT_PAREN, "Expect ')' after 'for' clauses.");
+    let body = this.parseStatement();
+
+    if (increment !== null) {
+      body = newBlock([body, newExprStmt(increment)]);
+    }
+    if (condition === null) {
+      condition = newLiteral(true);
+    }
+    body = newWhileStmt(condition, body);
+    if (initializer !== null) {
+      body = newBlock([initializer, body]);
+    }
+    return body;
+  }
   parseIfStmt(): IfStmt {
     this.consume(TokenType.LEFT_PAREN, "Expected '(' after 'if'.");
     const condition = this.parseExpression();
