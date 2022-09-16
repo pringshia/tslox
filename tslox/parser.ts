@@ -1,10 +1,29 @@
-import { ParseError, isParseError } from "@lib/error";
+import {
+  Block,
+  IfStmt,
+  newAssignment,
+  newBlock,
+  newIfStmt,
+  newLogical,
+  newVariable,
+  newWhileStmt,
+  Variable,
+  WhileStmt,
+} from "./grammar";
+import { Error, ParseError, isParseError } from "@lib/error";
 import {
   Expr,
+  Stmt,
   newBinary,
   newLiteral,
   newUnary,
   newGrouping,
+  newPrintStmt,
+  PrintStmt,
+  newExprStmt,
+  ExprStmt,
+  newVarStmt,
+  newNoopStmt,
 } from "@lib/grammar";
 import { Token, TokenType } from "@lib/tokens";
 import { Response } from "@lib/base";
@@ -23,27 +42,172 @@ primary        → NUMBER | STRING | "true" | "false" | "nil"
 export class Parser {
   tokens: Token[] = [];
   current = 0;
+  errorList: Error[] | undefined = undefined;
 
   constructor(tokens: Token[]) {
     this.tokens = tokens;
   }
-  parse(): Response<Expr | null> {
+  read(): Response<Expr | null> {
+    this.errorList = undefined;
     try {
       return {
         result: this.parseExpression(),
+        errors: this.errorList,
       };
     } catch (error) {
       if (isParseError(error)) {
         return {
           result: null,
-          errors: [error],
+          errors: this.errorList,
         };
       } else {
         throw error;
       }
     }
   }
+  parse(): Response<Stmt[] | null> {
+    this.errorList = undefined;
+    try {
+      let statements: Stmt[] = [];
+      while (!this.isAtEnd()) {
+        const parsed = this.parseDeclaration();
+        if (parsed.type !== "noopStmt") {
+          statements.push(parsed);
+        }
+      }
+      return {
+        result: statements,
+        errors: this.errorList,
+      };
+    } catch (error) {
+      if (isParseError(error)) {
+        return {
+          result: null,
+          errors: this.errorList,
+        };
+      } else {
+        throw error;
+      }
+    }
+  }
+  parseDeclaration(): Stmt {
+    try {
+      if (this.match(TokenType.VAR)) return this.parseVarDeclaration();
+      return this.parseStatement();
+    } catch (error) {
+      if (isParseError(error)) {
+        this.synchronize();
+      }
+      return newNoopStmt();
+    }
+  }
+  parseVarDeclaration(): Stmt {
+    const name = this.consume(TokenType.IDENTIFIER, "Expected variable name.");
+    let initializer = null;
+    if (this.match(TokenType.EQUAL)) {
+      initializer = this.parseExpression();
+    }
+    this.consume(
+      TokenType.SEMICOLON,
+      "Expected ';' after variable declaration."
+    );
 
+    return newVarStmt(name, initializer);
+  }
+  parseStatement(): Stmt {
+    if (this.match(TokenType.IF)) return this.parseIfStmt();
+    if (this.match(TokenType.PRINT)) {
+      return this.parsePrintStmt();
+    }
+    if (this.match(TokenType.WHILE)) {
+      return this.parseWhileStmt();
+    }
+    if (this.match(TokenType.LEFT_BRACE)) {
+      return newBlock(this.parseBlock());
+    }
+    return this.parseExprStmt();
+  }
+  parseBlock(): Stmt[] {
+    const statements: Stmt[] = [];
+    while (!this.check(TokenType.RIGHT_BRACE) && !this.isAtEnd()) {
+      statements.push(this.parseDeclaration());
+    }
+    this.consume(TokenType.RIGHT_BRACE, "Expected '}' after block.");
+    return statements;
+  }
+  parseWhileStmt(): WhileStmt {
+    this.consume(TokenType.LEFT_PAREN, "Expected '(' after 'while'.");
+    const condition = this.parseExpression();
+    this.consume(
+      TokenType.RIGHT_PAREN,
+      "Expected ')' after 'while' condition."
+    );
+    const body = this.parseStatement();
+
+    return newWhileStmt(condition, body);
+  }
+
+  parseIfStmt(): IfStmt {
+    this.consume(TokenType.LEFT_PAREN, "Expected '(' after 'if'.");
+    const condition = this.parseExpression();
+    this.consume(TokenType.RIGHT_PAREN, "Expected ')' after 'if' condition.");
+
+    const thenBranch = this.parseStatement();
+    let elseBranch = null;
+    if (this.match(TokenType.ELSE)) {
+      elseBranch = this.parseStatement();
+    }
+    return newIfStmt(condition, thenBranch, elseBranch);
+  }
+  parsePrintStmt(): PrintStmt {
+    const val = this.parseExpression();
+    this.consume(TokenType.SEMICOLON, "Expected ';' after value.");
+    return newPrintStmt(val);
+  }
+  parseExprStmt(): ExprStmt {
+    const val = this.parseExpression();
+    this.consume(TokenType.SEMICOLON, "Expected ';' after expression.");
+    return newExprStmt(val);
+  }
+
+  parseAssignment(): Expr {
+    const expr = this.parseOr();
+
+    if (this.match(TokenType.EQUAL)) {
+      const equals = this.previous();
+      const value = this.parseAssignment();
+
+      if (this.isVariable(expr)) {
+        const name = expr.name;
+        return newAssignment(name, value);
+      }
+      this.error(equals, "Invalid assignment target.");
+    }
+    return expr;
+  }
+  isVariable(expr: Expr): expr is Variable {
+    return expr.type === "variable";
+  }
+  parseOr(): Expr {
+    let expr = this.parseAnd();
+
+    while (this.match(TokenType.OR)) {
+      const operator = this.previous();
+      const right = this.parseAnd();
+      expr = newLogical(expr, operator, right);
+    }
+    return expr;
+  }
+  parseAnd(): Expr {
+    let expr = this.parseEquality();
+
+    while (this.match(TokenType.AND)) {
+      const operator = this.previous();
+      const right = this.parseEquality();
+      expr = newLogical(expr, operator, right);
+    }
+    return expr;
+  }
   parseExpression(): Expr {
     if (this.match(TokenType.COMMA))
       throw this.error(
@@ -51,11 +215,11 @@ export class Parser {
         "Expected expression before comma operator."
       );
 
-    let expr = this.parseEquality();
+    let expr = this.parseAssignment();
 
     while (this.match(TokenType.COMMA)) {
       let operator = this.previous();
-      let right = this.parseEquality();
+      let right = this.parseAssignment();
       expr = newBinary(expr, operator, right);
     }
     return expr;
@@ -152,6 +316,7 @@ export class Parser {
     if (this.match(TokenType.NUMBER, TokenType.STRING)) {
       return newLiteral(this.previous().literal);
     }
+    if (this.match(TokenType.IDENTIFIER)) return newVariable(this.previous());
     if (this.match(TokenType.LEFT_PAREN)) {
       let expr = this.parseExpression();
       this.consume(TokenType.RIGHT_PAREN, "Expected ')' after expression.");
@@ -169,6 +334,8 @@ export class Parser {
       where: token.type === TokenType.EOF ? "at end" : `at '${token.lexeme}'`,
       message,
     };
+    if (!this.errorList) this.errorList = [];
+    this.errorList.push(error);
     return error;
   }
   previous(): Token {

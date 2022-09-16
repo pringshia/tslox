@@ -20,5 +20,14 @@ export function ASTPrinter(expression: Expr) {
     .with({ type: "unary" }, (expr) =>
       parenthesize(expr.operator.lexeme, expr.right)
     )
+    .with({ type: "variable" }, (expr) => {
+      throw new Error("Not implemented");
+    })
+    .with({ type: "assignment" }, (expr) => {
+      throw new Error("Not implemented");
+    })
+    .with({ type: "logical" }, (expr) => {
+      throw new Error("Not implemented");
+    })
     .exhaustive();
 }

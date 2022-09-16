@@ -3,6 +3,7 @@ export default {
   transform: {
     "^.+\\.ts$": "ts-jest",
   },
+  clearMocks: true,
   preset: "ts-jest",
   moduleNameMapper: {
     "^@test/(.*)$": ["<rootDir>/test-bench/$1"],

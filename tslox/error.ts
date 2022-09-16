@@ -25,4 +25,7 @@ export const ConsoleReporter = {
   report(err: Error) {
     console.error(err);
   },
+  output(msg: any) {
+    console.log(msg);
+  },
 };
