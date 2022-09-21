@@ -29,5 +29,8 @@ export function ASTPrinter(expression: Expr) {
     .with({ type: "logical" }, (expr) => {
       throw new Error("Not implemented");
     })
+    .with({ type: "call" }, (expr) => {
+      throw new Error("Not implemented");
+    })
     .exhaustive();
 }

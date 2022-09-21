@@ -3,8 +3,11 @@ import {
   IfStmt,
   newAssignment,
   newBlock,
+  newCall,
+  newFunStmt,
   newIfStmt,
   newLogical,
+  newReturnStmt,
   newVariable,
   newWhileStmt,
   Variable,
@@ -92,6 +95,7 @@ export class Parser {
   }
   parseDeclaration(): Stmt {
     try {
+      if (this.match(TokenType.FUN)) return this.parseFunction("function");
       if (this.match(TokenType.VAR)) return this.parseVarDeclaration();
       return this.parseStatement();
     } catch (error) {
@@ -100,6 +104,25 @@ export class Parser {
       }
       return newNoopStmt();
     }
+  }
+  parseFunction(kind: string): Stmt {
+    const name = this.consume(TokenType.IDENTIFIER, `Expected ${kind} name.`);
+    this.consume(TokenType.LEFT_PAREN, `Expected '(' after ${kind} name.`);
+    const parameters = [];
+    if (!this.check(TokenType.RIGHT_PAREN)) {
+      do {
+        if (parameters.length >= 255) {
+          this.error(this.peek(), "Can't have more than 255 parameters.");
+        }
+        parameters.push(
+          this.consume(TokenType.IDENTIFIER, "Expected parameter name.")
+        );
+      } while (this.match(TokenType.COMMA));
+    }
+    this.consume(TokenType.RIGHT_PAREN, "Expected ')' after parameters.");
+    this.consume(TokenType.LEFT_BRACE, `Expected '{' before ${kind} body.`);
+    const body = this.parseBlock();
+    return newFunStmt(name, parameters, body);
   }
   parseVarDeclaration(): Stmt {
     const name = this.consume(TokenType.IDENTIFIER, "Expected variable name.");
@@ -120,6 +143,9 @@ export class Parser {
     if (this.match(TokenType.PRINT)) {
       return this.parsePrintStmt();
     }
+    if (this.match(TokenType.RETURN)) {
+      return this.parseReturnStmt();
+    }
     if (this.match(TokenType.WHILE)) {
       return this.parseWhileStmt();
     }
@@ -127,6 +153,15 @@ export class Parser {
       return newBlock(this.parseBlock());
     }
     return this.parseExprStmt();
+  }
+  parseReturnStmt(): Stmt {
+    const keyword = this.previous();
+    let value = null;
+    if (!this.check(TokenType.SEMICOLON)) {
+      value = this.parseExpression();
+    }
+    this.consume(TokenType.SEMICOLON, "Expected ';' after return value.");
+    return newReturnStmt(keyword, value);
   }
   parseBlock(): Stmt[] {
     const statements: Stmt[] = [];
@@ -246,19 +281,22 @@ export class Parser {
     return expr;
   }
   parseExpression(): Expr {
-    if (this.match(TokenType.COMMA))
-      throw this.error(
-        this.previous(),
-        "Expected expression before comma operator."
-      );
+    // Removing the comma operator for now since it was taking precedence
+    // over the comma in the function arguments list.
+
+    // if (this.match(TokenType.COMMA))
+    //   throw this.error(
+    //     this.previous(),
+    //     "Expected expression before comma operator."
+    //   );
 
     let expr = this.parseAssignment();
 
-    while (this.match(TokenType.COMMA)) {
-      let operator = this.previous();
-      let right = this.parseAssignment();
-      expr = newBinary(expr, operator, right);
-    }
+    // while (this.match(TokenType.COMMA)) {
+    //   let operator = this.previous();
+    //   let right = this.parseAssignment();
+    //   expr = newBinary(expr, operator, right);
+    // }
     return expr;
   }
   parseEquality(): Expr {
@@ -343,8 +381,35 @@ export class Parser {
       let right = this.parseUnary();
       return newUnary(operator, right);
     } else {
-      return this.parsePrimary();
+      return this.parseCall();
     }
+  }
+  parseCall(): Expr {
+    let expr = this.parsePrimary();
+    while (true) {
+      if (this.match(TokenType.LEFT_PAREN)) {
+        expr = this.finishCall(expr);
+      } else {
+        break;
+      }
+    }
+    return expr;
+  }
+  finishCall(callee: Expr): Expr {
+    const args: Expr[] = [];
+    if (!this.check(TokenType.RIGHT_PAREN)) {
+      do {
+        if (args.length >= 255) {
+          this.error(this.peek(), "Can't have more than 255 arguments.");
+        }
+        args.push(this.parseExpression());
+      } while (this.match(TokenType.COMMA));
+    }
+    const closingParen = this.consume(
+      TokenType.RIGHT_PAREN,
+      "Expected ')' after arguments."
+    );
+    return newCall(callee, closingParen, args);
   }
   parsePrimary(): Expr {
     if (this.match(TokenType.FALSE)) return newLiteral(false);

@@ -18,6 +18,7 @@ export type Expr =
   | Binary
   | Unary
   | Literal
+  | Call
   | Grouping
   | Variable
   | Assignment
@@ -26,6 +27,8 @@ export type Stmt =
   | ExprStmt
   | PrintStmt
   | VarStmt
+  | FunStmt
+  | ReturnStmt
   | NoopStmt
   | IfStmt
   | WhileStmt
@@ -83,6 +86,23 @@ export const newUnary = (operator: Token, right: Expr): Unary => ({
   kind: "expr",
   operator,
   right,
+});
+export interface Call extends ExprGrammar {
+  type: "call";
+  callee: Expr;
+  closingParen: Token;
+  args: Expr[];
+}
+export const newCall = (
+  callee: Expr,
+  closingParen: Token,
+  args: Expr[]
+): Call => ({
+  type: "call",
+  kind: "expr",
+  callee,
+  closingParen,
+  args,
 });
 export interface Grouping extends ExprGrammar {
   type: "grouping";
@@ -157,6 +177,37 @@ export const newVarStmt = (name: Token, initializer: Expr | null): VarStmt => ({
   kind: "stmt",
   name,
   initializer,
+});
+export interface FunStmt extends StmtGrammar {
+  type: "funStmt";
+  name: Token;
+  params: Token[];
+  body: Stmt[];
+}
+export const newFunStmt = (
+  name: Token,
+  params: Token[],
+  body: Stmt[]
+): FunStmt => ({
+  type: "funStmt",
+  kind: "stmt",
+  name,
+  params,
+  body,
+});
+export interface ReturnStmt extends StmtGrammar {
+  type: "returnStmt";
+  keyword: Token;
+  value: Expr | null;
+}
+export const newReturnStmt = (
+  keyword: Token,
+  value: Expr | null
+): ReturnStmt => ({
+  type: "returnStmt",
+  kind: "stmt",
+  keyword,
+  value,
 });
 export interface NoopStmt extends StmtGrammar {
   type: "noopStmt";

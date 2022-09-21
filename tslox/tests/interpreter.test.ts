@@ -247,3 +247,90 @@ describe("Logical operators", () => {
     });
   });
 });
+describe("Functions", () => {
+  it("should pass the smoke test", () => {
+    const logSpy = jest.spyOn(console, "log").mockImplementation();
+    const reportError = jest.fn();
+    const out = executeProgram(
+      `
+      fun sayHi(first, last) {
+        print "Hi, " + first + " " + last + "!";
+      }
+      sayHi("Dear", "Reader");
+    `,
+      (err) => reportError(err)
+    );
+    expect(reportError).not.toBeCalled();
+    expect(logSpy).toHaveBeenCalledWith("Hi, Dear Reader!");
+    logSpy.mockRestore();
+  });
+  it("should be able to recursively calculate Fibonacci numbers", () => {
+    const logSpy = jest.spyOn(console, "log").mockImplementation();
+    const reportError = jest.fn();
+    const out = executeProgram(
+      `
+      fun fib(n) {
+        if (n <= 1) return n;
+        return fib(n - 2) + fib(n - 1);
+      }
+      
+      for (var i = 0; i < 20; i = i + 1) {
+        print fib(i);
+      }    `,
+      (err) => reportError(err)
+    );
+    expect(reportError).not.toBeCalled();
+    const expectedResults = [
+      "0",
+      "1",
+      "1",
+      "2",
+      "3",
+      "5",
+      "8",
+      "13",
+      "21",
+      "34",
+      "55",
+      "89",
+      "144",
+      "233",
+      "377",
+      "610",
+      "987",
+      "1597",
+      "2584",
+      "4181",
+    ];
+    for (const [i, expectedResult] of expectedResults.entries()) {
+      expect(logSpy).toHaveBeenNthCalledWith(i + 1, expectedResult);
+    }
+    logSpy.mockRestore();
+  });
+  it("supports closures", () => {
+    const logSpy = jest.spyOn(console, "log").mockImplementation();
+    const reportError = jest.fn();
+    const out = executeProgram(
+      `
+      fun makeCounter() {
+        var i = 0;
+        fun count() {
+          i = i + 1;
+          print i;
+        }
+      
+        return count;
+      }
+      
+      var counter = makeCounter();
+      counter();
+      counter();
+          `,
+      (err) => reportError(err)
+    );
+    expect(reportError).not.toBeCalled();
+    expect(logSpy).toHaveBeenNthCalledWith(1, "1");
+    expect(logSpy).toHaveBeenNthCalledWith(2, "2");
+    logSpy.mockRestore();
+  });
+});

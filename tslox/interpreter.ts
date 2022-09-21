@@ -1,16 +1,16 @@
 import { Environment } from "./environment";
-import { match, P } from "ts-pattern";
+import { match } from "ts-pattern";
 import {
   Binary,
   Grouping,
   Literal,
   Unary,
-  Grammar,
-  ExprGrammar,
   Expr,
   Stmt,
   PrintStmt,
   ExprStmt,
+  FunStmt,
+  ReturnStmt,
   VarStmt,
   Variable,
   Assignment,
@@ -18,13 +18,82 @@ import {
   IfStmt,
   Logical,
   WhileStmt,
+  Call,
 } from "@lib/grammar";
 import { Token, TokenType } from "@lib/tokens";
 import { isRuntimeError, RuntimeError } from "@lib/error";
 import { Response } from "@lib/base";
 
+interface Callable {
+  type: "CallableFn";
+  arity: () => number;
+  call: (interpreter: Interpreter, args: any[]) => any;
+  toString: () => string;
+}
+const createCallable = (
+  arity: () => number,
+  call: (interpreter: Interpreter, args: any[]) => any,
+  toString: () => string
+): Callable => {
+  return {
+    type: "CallableFn",
+    arity,
+    call,
+    toString,
+  };
+};
+
+class TSLoxFunction implements Callable {
+  type: "CallableFn" = "CallableFn";
+  declaration: FunStmt;
+  closure: Environment;
+
+  constructor(declaration: FunStmt, closure: Environment) {
+    this.declaration = declaration;
+    this.closure = closure;
+  }
+  arity() {
+    return this.declaration.params.length;
+  }
+  call(interpreter: Interpreter, args: any[]) {
+    const env = new Environment(this.closure);
+    this.declaration.params.forEach((p, paramIndex) => {
+      env.define(p.lexeme, args[paramIndex]);
+    });
+    try {
+      interpreter.executeBlock(this.declaration.body, env);
+    } catch (e) {
+      if (isReturnException(e)) {
+        return e.value;
+      }
+    }
+    return null;
+  }
+  toString() {
+    return `<fn ${this.declaration.name.lexeme}>`;
+  }
+}
+
+type ReturnException = {
+  type: "returnException";
+  value: any;
+};
+const isReturnException = (e: any): e is ReturnException => {
+  return e.type === "returnException";
+};
+
 export class Interpreter {
-  environment = new Environment(null);
+  globals = new Environment(null);
+  environment = this.globals;
+
+  constructor() {
+    const clock: Callable = createCallable(
+      () => 0,
+      () => Date.now() / 1000,
+      () => `<native fn>`
+    );
+    this.globals.define("clock", clock);
+  }
 
   interpret(program: Stmt[]): Response<any> {
     const env = new Environment(null);
@@ -128,6 +197,28 @@ export class Interpreter {
 
       .otherwise(() => null);
   }
+  visitCallExpr(expr: Call): any {
+    const callee = this.evaluate(expr.callee) as Callable;
+    const evaledArgs = expr.args.map(this.evaluate.bind(this));
+
+    if (callee.type !== "CallableFn") {
+      const error: RuntimeError = {
+        token: expr.closingParen,
+        message: "Can only call functions and classes.",
+      };
+      throw error;
+    }
+    if (expr.args.length !== callee.arity()) {
+      const error: RuntimeError = {
+        token: expr.closingParen,
+        message: `Expected ${callee.arity()} argument(s) but got ${
+          expr.args.length
+        }.`,
+      };
+      throw error;
+    }
+    return callee.call(this, evaledArgs);
+  }
   visitVariableExpr(expr: Variable): any {
     return this.environment.get(expr.name);
   }
@@ -160,6 +251,19 @@ export class Interpreter {
     }
     this.environment.define(stmt.name.lexeme, val);
     return;
+  }
+  visitFunStmt(stmt: FunStmt): void {
+    const fn = new TSLoxFunction(stmt, this.environment);
+    this.environment.define(stmt.name.lexeme, fn);
+    return;
+  }
+  visitReturnStmt(stmt: ReturnStmt): void {
+    let value = stmt.value !== null ? this.evaluate(stmt.value) : null;
+    const ret: ReturnException = {
+      type: "returnException",
+      value,
+    };
+    throw ret;
   }
   visitIfStmt(stmt: IfStmt): void {
     if (this.isTruthy(this.evaluate(stmt.condition))) {
@@ -200,11 +304,14 @@ export class Interpreter {
       .with({ type: "grouping" }, this.visitGroupingExpr.bind(this))
       .with({ type: "binary" }, this.visitBinaryExpr.bind(this))
       .with({ type: "unary" }, this.visitUnaryExpr.bind(this))
+      .with({ type: "call" }, this.visitCallExpr.bind(this))
       .with({ type: "variable" }, this.visitVariableExpr.bind(this))
       .with({ type: "assignment" }, this.visitAssignmentExpr.bind(this))
       .with({ type: "logical" }, this.visitLogicalExpr.bind(this))
       .with({ type: "printStmt" }, this.visitPrintStmt.bind(this))
       .with({ type: "exprStmt" }, this.visitExprStmt.bind(this))
+      .with({ type: "funStmt" }, this.visitFunStmt.bind(this))
+      .with({ type: "returnStmt" }, this.visitReturnStmt.bind(this))
       .with({ type: "varStmt" }, this.visitVarStmt.bind(this))
       .with({ type: "block" }, this.visitBlock.bind(this))
       .with({ type: "ifStmt" }, this.visitIfStmt.bind(this))
