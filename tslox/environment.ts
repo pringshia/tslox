@@ -24,6 +24,19 @@ export class Environment {
     };
     throw error;
   }
+  getAt(distance: number, name: string): any {
+    return this.ancestor(distance || 0).values[name];
+  }
+  assignAt(distance: number, name: Token, val: any) {
+    this.ancestor(distance).values[name.lexeme] = val;
+  }
+  ancestor(distance: number): Environment {
+    let env: Environment = this;
+    for (let i = 0; i < distance; i++) {
+      env = env?.enclosing!; // we are taking a leap of faith here, assuming the resolver did its job correctly
+    }
+    return env;
+  }
   assign(name: Token, value: any) {
     if (name.lexeme in this.values) {
       this.values[name.lexeme] = value;

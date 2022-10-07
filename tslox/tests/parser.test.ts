@@ -48,7 +48,7 @@ describe("Parser for expressions", () => {
       });
     }
   });
-  it("should parse the comma operator", () => {
+  it.skip("should parse the comma operator", () => {
     const source = "3 + 4, 5 - 6, 1 + 3";
     const { result: tokens } = getTokens(source);
     const { result: tree } = new Parser(tokens).read();
@@ -70,7 +70,7 @@ describe("Parser for expressions", () => {
       expect(errors[0].message).toBe("Expected operand before operator.");
     }
   });
-  it("should throw a predicted error when left-operand is missing in binary expression (comma)", () => {
+  it.skip("should throw a predicted error when left-operand is missing in binary expression (comma)", () => {
     const source = ", 5";
     const { result: tokens } = getTokens(source);
     const { result: tree, errors: errors } = new Parser(tokens).read();

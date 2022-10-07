@@ -3,6 +3,7 @@ import * as lexer from "@lib/lexer";
 import { Parser, parse } from "@lib/parser";
 import { ConsoleReporter } from "@lib/error";
 import { Interpreter } from "@lib/interpreter";
+import { Resolver } from "./resolver";
 
 function executeProgram(source: string, onError = ConsoleReporter.report): any {
   let hasError = false;
@@ -24,7 +25,11 @@ function executeProgram(source: string, onError = ConsoleReporter.report): any {
     return;
   }
 
-  const { result, errors: runtimeErrors } = new Interpreter().interpret(ast);
+  const interpreter = new Interpreter();
+  new Resolver(interpreter).resolveStmts(ast);
+  // console.warn(interpreter.locals);
+
+  const { result, errors: runtimeErrors } = interpreter.interpret(ast);
   if (runtimeErrors && !!runtimeErrors.length) {
     hasError = true;
     runtimeErrors.map(onError);
@@ -45,7 +50,10 @@ function readEval(source: string): Response<any> {
   if ((parseErrors && !!parseErrors.length) || ast == null) {
     return parsedResult;
   }
-  const interpretedResult = new Interpreter().evaluator(ast);
+  const interpreter = new Interpreter();
+  new Resolver(interpreter).resolveExpr(ast);
+
+  const interpretedResult = interpreter.evaluator(ast);
   // const { result, errors: runtimeErrors } = interpretedResult;
   return interpretedResult;
 }

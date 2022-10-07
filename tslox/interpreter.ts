@@ -84,6 +84,7 @@ const isReturnException = (e: any): e is ReturnException => {
 
 export class Interpreter {
   globals = new Environment(null);
+  locals: Map<Expr, number> = new Map();
   environment = this.globals;
 
   constructor() {
@@ -220,11 +221,18 @@ export class Interpreter {
     return callee.call(this, evaledArgs);
   }
   visitVariableExpr(expr: Variable): any {
-    return this.environment.get(expr.name);
+    return this.lookupVariable(expr.name, expr);
   }
   visitAssignmentExpr(expr: Assignment): any {
     const val = this.evaluate(expr.value);
-    this.environment.assign(expr.name, val);
+
+    const distance = this.locals.get(expr);
+    if (distance != null) {
+      this.environment.assignAt(distance, expr.name, val);
+    } else {
+      this.globals.assign(expr.name, val);
+    }
+
     return val;
   }
   visitLogicalExpr(expr: Logical): any {
@@ -346,5 +354,13 @@ export class Interpreter {
       message: "Operands must be numbers",
     };
     throw error;
+  }
+  lookupVariable(name: Token, expr: Expr) {
+    const distance = this.locals.get(expr)!;
+    if (distance !== null && distance !== undefined) {
+      return this.environment.getAt(distance, name.lexeme);
+    } else {
+      return this.globals.get(name);
+    }
   }
 }
